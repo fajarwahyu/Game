@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tarik Tambang Jaringan</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+
+        .game-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #555;
+        }
+
+
+        /* Area Tali Tambang */
+        .tug-of-war-area {
+            position: relative;
+            height: 60px;
+            background-color: #e0e0e0;
+            border-radius: 30px;
+            margin: 30px 0;
+            overflow: hidden;
+            border: 2px solid #ccc;
+        }
+
+
+        .center-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #999;
+            z-index: 1;
+        }
+
+
+        .rope {
+            position: absolute;
+            top: 50%;
+            left: 50%; /* Mulai dari tengah */
+            transform: translate(-50%, -50%);
+            width: 100%; 
+            height: 10px;
+            background-color: #8d6e63; /* Warna tali */
+            transition: left 0.5s ease-in-out;
+            z-index: 2;
+        }
+
+
+        .knot {
+            position: absolute;
+            top: 50%;
+            left: 50%; /* Ikatan tali bergerak bersama properti left parent .rope wrapper logic */
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background-color: #d32f2f;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 3;
+        }
+
+
+        /* Wrapper untuk menggerakkan knot */
+        .rope-wrapper {
+            position: absolute;
+            top: 0;
+            left: 50%; /* Posisi awal 50% */
+            width: 100%;
+            height: 100%;
+            transition: left 0.5s ease-in-out;
+            pointer-events: none;
+        }
+        
+        .teams {
+            display: flex;
+            justify-content: space-between;
+            margin-top: -20px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .team-left { color: #27ae60; } /* Siswa */
+        .team-right { color: #c0392b; } /* Komputer */
+
+
+        /* Area Pertanyaan */
+        .question-box {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+
+        button.option-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+
+        button.option-btn:hover {
+            background-color: #2980b9;
+        }
+
+
+        button.option-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+
+        .feedback {
+            margin-top: 15px;
+            font-weight: bold;
+            height: 20px;
+        }
+        .correct { color: green; }
+        .wrong { color: red; }
+
+
+        .restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Sembunyikan dulu */
+        }
+        
+        .restart-btn:hover {
+            background-color: #1a252f;
+        }
+
+
+    </style>
+</head>
+<body>
+
+
+<div class="game-container">
+    <h1>Tarik Tambang Jaringan</h1>
+    <p>Jawab benar untuk menarik tali ke arahmu (Siswa)!</p>
+
+
+    <div class="score-board">
+        <span>Siswa: <span id="score-student">0</span></span>
+        <span>Komputer: <span id="score-comp">0</span></span>
+    </div>
+
+
+    <!-- Visualisasi Tali -->
+    <div class="teams">
+        <div class="team-left">👨‍🎓 SISWA</div>
+        <div class="team-right">🤖 KOMPUTER</div>
+    </div>
+
+
+    <div class="tug-of-war-area">
+        <div class="center-line"></div>
+        <!-- Wrapper ini yang akan kita geser left-nya -->
+        <div class="rope-wrapper" id="ropeWrapper">
+            <div style="position: absolute; top: 25px; left: 50%; transform: translateX(-50%); width: 100%; height: 10px; background: #8d6e63;"></div> <!-- Tali Horizontal -->
+            <div class="knot" style="left: 50%;"></div> <!-- Simpul Tengah -->
+        </div>
+    </div>
+
+
+    <div class="question-box" id="questionText">
+        Loading pertanyaan...
+    </div>
+
+
+    <div class="options-grid" id="optionsContainer">
+        <!-- Tombol jawaban akan muncul di sini -->
+    </div>
+
+
+    <div class="feedback" id="feedbackText"></div>
+    
+    <button class="restart-btn" id="restartBtn" onclick="initGame()">Main Lagi</button>
+</div>
+
+
+<script>
+    // Database Pertanyaan Jaringan SMK Kelas 10
+    const questions = [
+        {
+            q: "Perangkat keras yang berfungsi untuk menghubungkan beberapa komputer dalam satu jaringan lokal (LAN) adalah...",
+            options: ["Modem", "Switch", "Router", "Repeater"],
+            answer: 1 // Index jawaban benar (Switch)
+        },
+        {
+            q: "Alamat unik yang diberikan kepada setiap perangkat dalam jaringan komputer disebut...",
+            options: ["IP Address", "MAC Address", "URL", "DNS"],
+            answer: 0 // IP Address
+        },
+        {
+            q: "Kabel jaringan yang paling umum digunakan saat ini dengan konektor RJ-45 adalah kabel...",
+            options: ["Coaxial", "Fiber Optic", "UTP (Twisted Pair)", "USB"],
+            answer: 2 // UTP
+        },
+        {
+            q: "Topologi jaringan di mana semua komputer terhubung ke satu kabel pusat disebut topologi...",
+            options: ["Star", "Ring", "Bus", "Mesh"],
+            answer: 2 // Bus
+        },
+        {
+            q: "Protokol standar yang digunakan untuk browsing website di internet adalah...",
+            options: ["FTP", "SMTP", "HTTP/HTTPS", "SSH"],
+            answer: 2 // HTTP
+        }
+    ];
+
+
+    let currentQuestionIndex = 0;
+    let ropePosition = 50; // 0 = Menang Siswa, 100 = Menang Komputer, 50 = Tengah
+    let isGameOver = false;
+
+
+    const questionText = document.getElementById('questionText');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const feedbackText = document.getElementById('feedbackText');
+    const ropeWrapper = document.getElementById('ropeWrapper');
+    const restartBtn = document.getElementById('restartBtn');
+    const scoreStudentEl = document.getElementById('score-student');
+    const scoreCompEl = document.getElementById('score-comp');
+
+
+    function initGame() {
+        currentQuestionIndex = 0;
+        ropePosition = 50;
+        isGameOver = false;
+        updateRopeVisual();
+        restartBtn.style.display = 'none';
+        scoreStudentEl.innerText = '0';
+        scoreCompEl.innerText = '0';
+        feedbackText.innerText = '';
+        loadQuestion();
+    }
+
+
+    function updateRopeVisual() {
+        // Menggerakkan wrapper. 
+        // Jika ropePosition 50 -> left: 50%
+        // Jika ropePosition 0 (Siswa menang) -> left: 0% (geser ke kiri)
+        // Jika ropePosition 100 (Komputer menang) -> left: 100% (geser ke kanan)
+        // Namun, karena wrapper lebar 100%, kita perlu logika sedikit berbeda agar simpul (knot) berada di posisi yang pas.
+        
+        // Kita gunakan logika sederhana: Geser 'left' dari wrapper.
+        // Tapi agar knot terlihat bergerak mulus dari tengah ke kiri/kanan container:
+        // Container lebar 100%. Knot di tengah wrapper.
+        // Agar knot ada di 0% container, wrapper left harus -50%? Tidak, mari sederhanakan.
+        
+        // Cara termudah: Ubah left dari ropeWrapper.
+        // Default left: 50%. 
+        // Step per soal: 100% / 5 soal = 20% per geseran.
+        // Benar: kurangi left (ke kiri). Salah: tambah left (ke kanan).
+        
+        ropeWrapper.style.left = ropePosition + "%";
+    }
+
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= questions.length) {
+            endGame(true); // Semua soal habis
+            return;
+        }
+
+
+        const currentQ = questions[currentQuestionIndex];
+        questionText.innerText = `Soal ${currentQuestionIndex + 1}: ${currentQ.q}`;
+        optionsContainer.innerHTML = '';
+
+
+        currentQ.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+
+    function checkAnswer(selectedIndex) {
+        if (isGameOver) return;
+
+
+        const currentQ = questions[currentQuestionIndex];
+        const buttons = document.querySelectorAll('.option-btn');
+        
+        // Disable semua tombol
+        buttons.forEach(btn => btn.disabled = true);
+
+
+        if (selectedIndex === currentQ.answer) {
+            // Jawaban BENAR
+            feedbackText.innerText = "Benar! Tarik ke kiri!";
+            feedbackText.className = "feedback correct";
+            buttons[selectedIndex].style.backgroundColor = "#27ae60";
+            
+            // Logika Tarik Tambang: Geser ke KIRI (kurangi persentase)
+            ropePosition -= 10; // Geser 10% ke kiri
+            scoreStudentEl.innerText = parseInt(scoreStudentEl.innerText) + 1;
+
+
+        } else {
+            // Jawaban SALAH
+            feedbackText.innerText = "Salah! Komputer menarik ke kanan!";
+            feedbackText.className = "feedback wrong";
+            buttons[selectedIndex].style.backgroundColor = "#c0392b";
+            buttons[currentQ.answer].style.backgroundColor = "#27ae60"; // Tunjukkan yang benar
+
+
+            // Logika Tarik Tambang: Geser ke KANAN (tambah persentase)
+            ropePosition += 10; // Geser 10% ke kanan
+            scoreCompEl.innerText = parseInt(scoreCompEl.innerText) + 1;
+        }
+
+
+        updateRopeVisual();
+        checkGameState();
+    }
+
+
+    function checkGameState() {
+        // Cek kondisi menang/kalah berdasarkan posisi tali
+        // Jika ropePosition <= 10 (Sangat ke kiri), Siswa Menang Mutlak
+        // Jika ropePosition >= 90 (Sangat ke kanan), Komputer Menang Mutlak
+        
+        setTimeout(() => {
+            if (ropePosition <= 10) {
+                endGame(true, "Selamat! Kamu menguasai dasar jaringan!");
+            } else if (ropePosition >= 90) {
+                endGame(false, "Yah, Komputer menang. Ayo belajar lagi!");
+            } else {
+                // Lanjut ke soal berikutnya jika belum habis
+                currentQuestionIndex++;
+                feedbackText.innerText = ""; // Reset feedback text agar tidak menumpuk
+                loadQuestion();
+            }
+        }, 1000); // Delay 1 detik agar siswa melihat hasil
+    }
+
+
+    function endGame(isWin, message) {
+        isGameOver = true;
+        optionsContainer.innerHTML = '';
+        questionText.innerText = isWin ? "🏆 VICTORY 🏆" : "💀 DEFEAT 💀";
+        feedbackText.innerText = message || (isWin ? "Luar biasa! Semua jawaban benar." : "Jangan menyerah, coba lagi!");
+        feedbackText.className = isWin ? "feedback correct" : "feedback wrong";
+        restartBtn.style.display = 'inline-block';
+    }
+
+
+    // Mulai game saat load
+    initGame();
+
+
+</script>
+
+
+</body>
+</html>
+
